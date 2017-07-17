@@ -1,0 +1,211 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://fb.me/react-with-addons-15.1.0.js"></script>
+  <script src="https://fb.me/react-dom-15.1.0.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style type="text/css">
+  #container {
+    width: 500px;
+    height: 500px;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+
+  #slide {
+    position: relative;
+    float: left;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    min-width: 500px;
+  }
+
+  #slides {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .clearfix:after {
+    content		: "";
+    visibility	: hidden;
+    display		: block;
+    height		: 0;
+    clear		: both;
+  }
+  .images {
+    max-width: 500px;
+    max-height: 500px;
+    margin: auto auto auto auto;
+  }
+  </style>
+
+  <script type="text/babel">
+
+    class Slider extends React.Component {
+      constructor() {
+        super()
+        this.state = {
+          position: 0,
+          slideWith: '',
+          startPosition: '',
+          endPosition: '',
+          transition: false,
+          transitionEnds: true,
+        }
+        this.onStart = this.onStart.bind(this);
+      }
+
+      componentDidMount() {
+
+        function transitionEvent() { //Кроссбраузерное определение поддержки transition
+         // Create a fake element
+         const el = document.createElement("div");
+
+         if(el.style.OTransition) return "oTransitionEnd";
+         if(el.style.WebkitTransition) return "webkitTransitionEnd";
+         return "transitionend";
+       }
+
+        const cb = () => this.setState({transitionEnds: true}) //определяет окончание события transitionEnds
+                                                                              //во время которого невозможно передвинуть слады,
+        this.refs.slides.addEventListener(transitionEvent(), cb, false); // для избежания неправильного позиционироваиня
+      }
+
+      onStart(e) {
+        let typeOfMove = e.pageX || e.touches[0].pageX; //определить тип - мышь/тач
+        const slideWith = e.target.parentElement.clientWidth //высота родительского элемента, равная у всех
+        const containerElem = this.refs.container;
+        const slidesElem = this.refs.slides;
+        const slidesCoords = this.getCoords(slidesElem); //вычислить координаты ленты слайдов
+        const containerCoords = this.getCoords(containerElem); //вычислить координаты контейнера
+        const shiftX = typeOfMove - slidesCoords.left; //курсор сдвинут относительно левого-верхнего
+        //угла слайда на расстояние shiftX
+
+      this.setState({
+        startPosition: slidesCoords.left,
+        slideWith: slideWith,
+        transition: false
+      })
+
+      slidesElem.ondragstart = (e) => {  //отключить браузерный Drag’n’Drop для
+        return false;                    //избежания дублирования объекта
+      };
+
+      const handlerMove = (e) => {
+        typeOfMove = e.pageX || e.touches[0].pageX;
+        let slidesLeftSide = typeOfMove - shiftX - containerCoords.left; //  вычесть координату родителя, т.к. position: relative
+        let slidesRightSide = slidesLeftSide + slidesElem.offsetWidth + typeOfMove;
+        if (slidesLeftSide > 0) { // курсор ушёл вне слайдера
+          slidesLeftSide = slidesLeftSide/15;
+          //console.log('slidesLeftSide', slidesLeftSide/15);
+        }
+
+        const rightEdge = slidesElem.offsetWidth - containerElem.offsetWidth;
+        if (Math.abs(slidesLeftSide) > rightEdge ) {
+          slidesLeftSide = (slidesLeftSide+rightEdge)/15 -rightEdge;    //-rightEdge - граница
+        }
+
+        this.setState({position: slidesLeftSide})
+      }
+      const typeOfEvent = e.type === 'mousedown' ? 'mousemove' : 'touchmove' //определение типа события
+      document.addEventListener(typeOfEvent, handlerMove)
+
+      const handlerEndMove = (e) => {
+        const endPosition = this.getCoords(slidesElem).left;
+        const slideWith = this.state.slideWith;
+        const startPosition = this.state.startPosition;
+        const leftSlideMoving = startPosition - endPosition - slideWith //расстояние, на которое нужно передвинуть слайды влево
+        const rightSlideMoving = endPosition - startPosition - slideWith //расстояние, на которое нужно передвинуть слайды вправо
+        const position = this.state.position;
+        const slideMooveBack = slideWith*20/100
+
+        if(startPosition > endPosition){ //проверка на левую границу
+          if(startPosition - endPosition > slideMooveBack){
+            this.setState({
+              position: leftSlideMoving + position,
+              transition: true,
+              transitionEnds: false
+          })
+          }else{
+            this.setState({
+              position: position + startPosition - endPosition, //отодвинуть на исходное положение
+              transition: true,
+              transitionEnds: false
+            })
+          }
+
+        }else if(startPosition !== endPosition){ //проверка на правую границу
+          if(endPosition - startPosition > slideMooveBack){
+            this.setState({
+              position: position - rightSlideMoving,
+              transition: true,
+              transitionEnds: false
+            })
+          }else{
+            this.setState({
+              position: position + startPosition - endPosition,
+              transition: true,
+              transitionEnds: false
+            }) //отодвинуть на исходное положение
+          }
+        }
+        document.removeEventListener(typeOfEvent, handlerMove)
+        document.removeEventListener(end, handlerEndMove)
+      };
+      const end = e.type === 'mousedown' ? 'mouseup' : 'touchend' //определение типа события
+      document.addEventListener(end, handlerEndMove)
+    };
+
+      getCoords(elem) {
+        const specs = elem.getBoundingClientRect();
+
+        return {
+          top: specs.top + pageYOffset,
+          left: specs.left + pageXOffset
+        };
+      }
+
+      componentWillUnmount() {
+        this.refs.slides.removeEventListener("transitionend", showMessage, false);
+      }
+
+      render() {
+        const array = [
+          'https://s-media-cache-ak0.pinimg.com/originals/cf/9a/d4/cf9ad453ff499e19a2f4f3fe3bee4d3b.jpg',
+          'http://img.wennermedia.com/social/rs-202168-Screen-Shot-2015-07-08-at-8.24.08-AM.jpg',
+          'http://www.telegraph.co.uk/content/dam/comedy/2015/12/17/simpsonsgrandad_3121063k-large_trans_NvBQzQNjv4Bq_NJ62v2ZFDvrR1Z2dUS5zJJ6ddzReAsOOegOHkyCFjw.jpg',
+          'https://s-media-cache-ak0.pinimg.com/originals/f1/32/c5/f132c55842f2d1da429ed2de7a46172e.jpg',
+          'http://www.polyvore.com/cgi/img-thing?.out=jpg&size=l&tid=57168020',
+          'http://akns-images.eonline.com/eol_images/Entire_Site/201555/rs_300x300-150605073215-600-homer-simpson-doughnut.ls.6515.jpg?downsize=600:*&crop=600:300;left,top',
+          'https://s-media-cache-ak0.pinimg.com/originals/7e/b7/4b/7eb74b388a4b35dde1832010ca072881.jpg'
+        ]
+        const transition = this.state.transition ? 'all 0.25s ease 0s' : ''
+        return (
+          <div id="container" ref="container">
+            <ul id="slides" className='clearfix' ref="slides"
+              onMouseDown={this.state.transitionEnds ? this.onStart : null}
+              onTouchStart={this.state.transitionEnds ? this.onStart : null}
+              style={{transform: `translate3d(${this.state.position}px, 0px, 0px)`,
+              transition: transition}}
+              >
+              {array.map((a) => <li id="slide" key={a.toString()}><img src={a} className='images'/></li>)}
+            </ul>
+          </div>
+        )
+      }
+    }
+    ReactDOM.render(<Slider />, document.getElementById('app'));
+  </script>
+</head>
+
+<body>
+  <div id='app'></div>
+</body>
+
+</html>
