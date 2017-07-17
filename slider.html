@@ -79,6 +79,11 @@
       }
 
       onStart(e) {
+        e.preventDefault();
+        if(e.button !== 0){
+          return
+        }
+        console.log('e', event.which);
         let typeOfMove = e.pageX || e.touches[0].pageX; //определить тип - мышь/тач
         const slideWith = e.target.parentElement.clientWidth //высота родительского элемента, равная у всех
         const containerElem = this.refs.container;
@@ -100,6 +105,10 @@
       };
 
       const handlerMove = (e) => {
+        e.preventDefault();
+        if(e.button !== 0){
+          return
+        }
         typeOfMove = e.pageX || e.touches[0].pageX;
         let slidesLeftSide = typeOfMove - shiftX - containerCoords.left; //  вычесть координату родителя, т.к. position: relative
         let slidesRightSide = slidesLeftSide + slidesElem.offsetWidth + typeOfMove;
@@ -151,21 +160,18 @@
               transitionEnds: false
             })
           }else{
-            console.log('startPosition', startPosition, 'position', position, 'endPosition', endPosition);
-
             this.setState({
               position: +(position + startPosition - endPosition).toFixed(0),
               transition: true,
               transitionEnds: false
             }) //отодвинуть на исходное положение
-            console.log('state position', position + startPosition - endPosition);
-
           }
         }
         document.removeEventListener(typeOfEvent, handlerMove)
         document.removeEventListener(end, handlerEndMove)
       };
       const end = e.type === 'mousedown' ? 'mouseup' : 'touchend' //определение типа события
+      console.log('e.button', e.button);
       document.addEventListener(end, handlerEndMove)
     };
 
@@ -193,7 +199,7 @@
           'https://s-media-cache-ak0.pinimg.com/originals/7e/b7/4b/7eb74b388a4b35dde1832010ca072881.jpg'
         ]
         const transition = this.state.transition ? 'all 0.25s ease 0s' : ''
-        console.log('position', this.state.position);
+        const startMouseMove = this.state.transitionEnds ? this.onStart : null
         return (
           <div id="container" ref="container">
             <ul id="slides" className='clearfix' ref="slides"
