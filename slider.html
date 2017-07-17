@@ -2,6 +2,7 @@
 
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://fb.me/react-with-addons-15.1.0.js"></script>
   <script src="https://fb.me/react-dom-15.1.0.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
@@ -86,9 +87,10 @@
         const containerCoords = this.getCoords(containerElem); //вычислить координаты контейнера
         const shiftX = typeOfMove - slidesCoords.left; //курсор сдвинут относительно левого-верхнего
         //угла слайда на расстояние shiftX
+        console.log('typeOfMove', typeOfMove);
 
       this.setState({
-        startPosition: +slidesCoords.left.toFixed(1),
+        startPosition: slidesCoords.left,
         slideWith: slideWith,
         transition: false
       })
@@ -103,7 +105,7 @@
         let slidesRightSide = slidesLeftSide + slidesElem.offsetWidth + typeOfMove;
         if (slidesLeftSide > 0) { // курсор ушёл вне слайдера
           slidesLeftSide = slidesLeftSide/15;
-          slidesLeftSide = +slidesLeftSide.toFixed(0) //Привести к числу и округлить до 1 цифры после запятой
+          slidesLeftSide = +slidesLeftSide.toFixed(0) //Привести к числу и округлить до целого числа
           console.log('slidesLeftSide.toFixed(0)', slidesLeftSide);
         }
 
@@ -130,13 +132,13 @@
         if(startPosition > endPosition){ //проверка на левую границу
           if(startPosition - endPosition > slideMooveBack){
             this.setState({
-              position: leftSlideMoving + position,
+              position: +(leftSlideMoving + position).toFixed(0),
               transition: true,
               transitionEnds: false
           })
           }else{
             this.setState({
-              position: position + startPosition - endPosition, //отодвинуть на исходное положение
+              position: +(position + startPosition - endPosition).toFixed(0), //отодвинуть на исходное положение
               transition: true,
               transitionEnds: false
             })
@@ -144,7 +146,7 @@
         }else if(startPosition !== endPosition){ //проверка на правую границу
           if(endPosition - startPosition > slideMooveBack){
             this.setState({
-              position: position - rightSlideMoving,
+              position: +(position - rightSlideMoving).toFixed(0),
               transition: true,
               transitionEnds: false
             })
@@ -152,7 +154,7 @@
             console.log('startPosition', startPosition, 'position', position, 'endPosition', endPosition);
 
             this.setState({
-              position: position + startPosition - endPosition,
+              position: +(position + startPosition - endPosition).toFixed(0),
               transition: true,
               transitionEnds: false
             }) //отодвинуть на исходное положение
