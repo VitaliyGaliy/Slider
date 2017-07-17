@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="style.css">
   <style type="text/css">
   #container {
-    width: 500px;
-    height: 500px;
+    width: 300px;
+    height: 300px;
     overflow: hidden;
     margin: 0 auto;
   }
@@ -20,7 +20,7 @@
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
-    min-width: 500px;
+    min-width: 300px;
   }
 
   #slides {
@@ -39,8 +39,8 @@
     clear		: both;
   }
   .images {
-    max-width: 500px;
-    max-height: 500px;
+    max-width: 300px;
+    max-height: 300px;
     margin: auto auto auto auto;
   }
   </style>
@@ -88,7 +88,7 @@
         //угла слайда на расстояние shiftX
 
       this.setState({
-        startPosition: slidesCoords.left,
+        startPosition: +slidesCoords.left.toFixed(1),
         slideWith: slideWith,
         transition: false
       })
@@ -103,21 +103,23 @@
         let slidesRightSide = slidesLeftSide + slidesElem.offsetWidth + typeOfMove;
         if (slidesLeftSide > 0) { // курсор ушёл вне слайдера
           slidesLeftSide = slidesLeftSide/15;
-          //console.log('slidesLeftSide', slidesLeftSide/15);
+          slidesLeftSide = +slidesLeftSide.toFixed(0) //Привести к числу и округлить до 1 цифры после запятой
+          console.log('slidesLeftSide.toFixed(0)', slidesLeftSide);
         }
 
         const rightEdge = slidesElem.offsetWidth - containerElem.offsetWidth;
         if (Math.abs(slidesLeftSide) > rightEdge ) {
           slidesLeftSide = (slidesLeftSide+rightEdge)/15 -rightEdge;    //-rightEdge - граница
+          slidesLeftSide = +slidesLeftSide.toFixed(0)
+          console.log('slidesLeftSide.toFixed(0)', slidesLeftSide);
         }
-
         this.setState({position: slidesLeftSide})
       }
       const typeOfEvent = e.type === 'mousedown' ? 'mousemove' : 'touchmove' //определение типа события
       document.addEventListener(typeOfEvent, handlerMove)
 
       const handlerEndMove = (e) => {
-        const endPosition = this.getCoords(slidesElem).left;
+        const endPosition = +this.getCoords(slidesElem).left.toFixed(1);
         const slideWith = this.state.slideWith;
         const startPosition = this.state.startPosition;
         const leftSlideMoving = startPosition - endPosition - slideWith //расстояние, на которое нужно передвинуть слайды влево
@@ -139,7 +141,6 @@
               transitionEnds: false
             })
           }
-
         }else if(startPosition !== endPosition){ //проверка на правую границу
           if(endPosition - startPosition > slideMooveBack){
             this.setState({
@@ -148,11 +149,15 @@
               transitionEnds: false
             })
           }else{
+            console.log('startPosition', startPosition, 'position', position, 'endPosition', endPosition);
+
             this.setState({
               position: position + startPosition - endPosition,
               transition: true,
               transitionEnds: false
             }) //отодвинуть на исходное положение
+            console.log('state position', position + startPosition - endPosition);
+
           }
         }
         document.removeEventListener(typeOfEvent, handlerMove)
@@ -186,6 +191,7 @@
           'https://s-media-cache-ak0.pinimg.com/originals/7e/b7/4b/7eb74b388a4b35dde1832010ca072881.jpg'
         ]
         const transition = this.state.transition ? 'all 0.25s ease 0s' : ''
+        console.log('position', this.state.position);
         return (
           <div id="container" ref="container">
             <ul id="slides" className='clearfix' ref="slides"
