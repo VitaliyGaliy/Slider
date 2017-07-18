@@ -79,12 +79,16 @@
       }
 
       onStart(e) {
-        e.preventDefault();
-        if(e.button !== 0){
+          if (e.button !== 0 && !e.touches) {
+            const event = new Event('mouseup');
+            document.dispatchEvent(event);  //триггер события mouseup при одновременном нажатии правой клвавиши
+            const typeOfE = e.type === 'mousedown' ? 'mouseup' : 'touchend'
+            document.removeEventListener(typeOfE, handlerEndMove)
           return
         }
-        console.log('e', event.which);
+
         let typeOfMove = e.pageX || e.touches[0].pageX; //определить тип - мышь/тач
+        console.log('e.touches', e.touches);
         const slideWith = e.target.parentElement.clientWidth //высота родительского элемента, равная у всех
         const containerElem = this.refs.container;
         const slidesElem = this.refs.slides;
@@ -92,7 +96,6 @@
         const containerCoords = this.getCoords(containerElem); //вычислить координаты контейнера
         const shiftX = typeOfMove - slidesCoords.left; //курсор сдвинут относительно левого-верхнего
         //угла слайда на расстояние shiftX
-        console.log('typeOfMove', typeOfMove);
 
       this.setState({
         startPosition: slidesCoords.left,
@@ -105,24 +108,18 @@
       };
 
       const handlerMove = (e) => {
-        e.preventDefault();
-        if(e.button !== 0){
-          return
-        }
         typeOfMove = e.pageX || e.touches[0].pageX;
         let slidesLeftSide = typeOfMove - shiftX - containerCoords.left; //  вычесть координату родителя, т.к. position: relative
         let slidesRightSide = slidesLeftSide + slidesElem.offsetWidth + typeOfMove;
         if (slidesLeftSide > 0) { // курсор ушёл вне слайдера
           slidesLeftSide = slidesLeftSide/15;
           slidesLeftSide = +slidesLeftSide.toFixed(0) //Привести к числу и округлить до целого числа
-          console.log('slidesLeftSide.toFixed(0)', slidesLeftSide);
         }
 
         const rightEdge = slidesElem.offsetWidth - containerElem.offsetWidth;
         if (Math.abs(slidesLeftSide) > rightEdge ) {
           slidesLeftSide = (slidesLeftSide+rightEdge)/15 -rightEdge;    //-rightEdge - граница
           slidesLeftSide = +slidesLeftSide.toFixed(0)
-          console.log('slidesLeftSide.toFixed(0)', slidesLeftSide);
         }
         this.setState({position: slidesLeftSide})
       }
@@ -171,7 +168,6 @@
         document.removeEventListener(end, handlerEndMove)
       };
       const end = e.type === 'mousedown' ? 'mouseup' : 'touchend' //определение типа события
-      console.log('e.button', e.button);
       document.addEventListener(end, handlerEndMove)
     };
 
@@ -199,7 +195,7 @@
           'https://s-media-cache-ak0.pinimg.com/originals/7e/b7/4b/7eb74b388a4b35dde1832010ca072881.jpg'
         ]
         const transition = this.state.transition ? 'all 0.25s ease 0s' : ''
-        const startMouseMove = this.state.transitionEnds ? this.onStart : null
+        console.log('position', this.state.position);
         return (
           <div id="container" ref="container">
             <ul id="slides" className='clearfix' ref="slides"
